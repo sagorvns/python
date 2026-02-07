@@ -1,0 +1,13 @@
+# Django - The web framework for Python
+# Version 4.2 is used for this project
+Django==4.2.7
+
+# Django REST Framework - Toolkit for building Web APIs
+# This makes it easy to create REST APIs with Django
+djangorestframework==3.14.0
+
+# django-cors-headers - Handles CORS (Cross-Origin Resource Sharing)
+# This allows your React frontend (different port) to communicate with Django backend
+django-cors-headers==4.3.1
+
+

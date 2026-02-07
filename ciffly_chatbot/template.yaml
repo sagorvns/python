@@ -1,0 +1,71 @@
+# AWS SAM template - Ciffly Chatbot (Lambda + optional DynamoDB)
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Ciffly Chatbot API - AI agents with Support, QnA, Lead capture
+
+Parameters:
+  OpenAIApiKey:
+    Type: String
+    NoEcho: true
+    Description: OpenAI API key (or use Anthropic and set in env)
+  UseCheckpointTable:
+    Type: String
+    Default: "false"
+    AllowedValues: [ "true", "false" ]
+    Description: Create DynamoDB table for conversation checkpoints (multi-turn)
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512
+    Runtime: python3.12
+
+Resources:
+  CheckpointTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateCheckpointTable
+    Properties:
+      TableName: !Sub "${AWS::StackName}-checkpoints"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: thread_id
+          AttributeType: S
+        - AttributeName: checkpoint_ns
+          AttributeType: S
+      KeySchema:
+        - AttributeName: thread_id
+          KeyType: HASH
+        - AttributeName: checkpoint_ns
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  ChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: lambda_function.handler
+      Description: Ciffly Chatbot - supervisor + support/qna/lead agents
+      Environment:
+        Variables:
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+          DYNAMODB_CHECKPOINT_TABLE: !If [ CreateCheckpointTable, !Ref CheckpointTable, "" ]
+          LOG_LEVEL: INFO
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /chat
+            Method: post
+
+Conditions:
+  CreateCheckpointTable: !Equals [ !Ref UseCheckpointTable, "true" ]
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/chat"
+  ChatbotFunctionArn:
+    Description: Chatbot Lambda ARN
+    Value: !GetAtt ChatbotFunction.Arn

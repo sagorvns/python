@@ -1,0 +1,20 @@
+# Ciffly Chatbot - AI agents & AWS deployment
+# Python 3.10+
+
+# LangChain & LangGraph
+langchain>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+langchain-community>=0.3.0
+
+# LLM (use OpenAI or Anthropic)
+langchain-openai>=0.2.0
+langchain-anthropic>=0.2.0
+
+# AWS
+boto3>=1.35.0
+# Optional: pip install langgraph-dynamodb-checkpoint for DynamoDB checkpoints
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
