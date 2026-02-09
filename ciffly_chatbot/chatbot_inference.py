@@ -22,12 +22,26 @@ logger = get_logger(__name__)
 
 
 def _get_llm():
-    """Create LLM from env (OPENAI_API_KEY or ANTHROPIC_API_KEY)."""
+    """Create LLM from env (GOOGLE_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)."""
+    # Try Google Gemini first
+    if os.getenv("GOOGLE_API_KEY"):
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            return ChatGoogleGenerativeAI(
+                model=os.getenv("GOOGLE_MODEL", "gemini-2.5-flash"),
+                temperature=0.2,
+            )
+        except ImportError:
+            logger.warning("langchain-google-genai not installed. Install with: pip install langchain-google-genai")
+    
+    # Try OpenAI
     if os.getenv("OPENAI_API_KEY"):
         return ChatOpenAI(
             model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             temperature=0.2,
         )
+    
+    # Try Anthropic
     try:
         from langchain_anthropic import ChatAnthropic
         if os.getenv("ANTHROPIC_API_KEY"):
@@ -37,7 +51,8 @@ def _get_llm():
             )
     except ImportError:
         pass
-    raise RuntimeError("Set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env")
+    
+    raise RuntimeError("Set GOOGLE_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env")
 
 
 def _get_checkpointer():
